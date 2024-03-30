@@ -1,0 +1,212 @@
+datasource db {
+    provider = "postgres"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id Int @id @default(autoincrement())
+
+    provider Provider[]
+    profile  Profile?
+
+    store Store[]
+
+    cart      Cart[]
+    cartShare CartShare[]
+
+    order Order[]
+
+    transaction Transaction[]
+
+    discount DiscountItem[]
+
+    notify NotifyToken[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Profile {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id])
+    userId    Int      @unique
+    firstName String
+    lastName  String
+    bio       String?
+    avatar    String?
+    address   String[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Provider {
+    id         Int      @id @default(autoincrement())
+    user       User     @relation(fields: [userId], references: [id])
+    userId     Int
+    provider   String
+    providerId String
+    email      String
+    username   String?
+    password   String?
+    // something else base on provider
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}
+
+model Store {
+    id          Int       @id @default(autoincrement())
+    name        String
+    description String?
+    owner       User      @relation(fields: [ownerId], references: [id])
+    ownerId     Int
+    products    Product[] // สินค้าที่ขายในร้านค้านี้
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+    id Int @id @default(autoincrement())
+
+    category   Category? @relation(fields: [categoryId], references: [id])
+    categoryId Int?
+
+    store   Store? @relation(fields: [storeId], references: [id])
+    storeId Int?
+
+    name        String
+    description String
+    price       Float
+    quantity    Int
+    images      String[]
+
+    CartItem  CartItem[]
+    OrderItem OrderItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Category {
+    id          Int       @id @default(autoincrement())
+    name        String
+    description String?
+    products    Product[] // สินค้าที่อยู่ในหมวดหมู่นี้
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+}
+
+model Cart {
+    id        Int         @id @default(autoincrement())
+    user      User?       @relation(fields: [userId], references: [id])
+    userId    Int?
+    shared    CartShare[]
+    items     CartItem[]
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+}
+
+model CartShare {
+    id         Int    @id @default(autoincrement())
+    cart       Cart   @relation(fields: [cartId], references: [id])
+    cartId     Int
+    user       User   @relation(fields: [userId], references: [id])
+    userId     Int
+    permission String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+    id        Int      @id @default(autoincrement())
+    cart      Cart     @relation(fields: [cartId], references: [id])
+    cartId    Int
+    product   Product  @relation(fields: [productId], references: [id])
+    productId Int
+    quantity  Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Order {
+    id     Int    @id @default(autoincrement())
+    user   User   @relation(fields: [userId], references: [id])
+    userId Int
+    status String
+
+    transaction   Transaction @relation(fields: [transactionId], references: [id])
+    transactionId Int         @unique
+
+    items OrderItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+    id        Int      @id @default(autoincrement())
+    order     Order    @relation(fields: [orderId], references: [id])
+    orderId   Int
+    product   Product  @relation(fields: [productId], references: [id])
+    productId Int
+    quantity  Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+    id     Int  @id @default(autoincrement())
+    user   User @relation(fields: [userId], references: [id])
+    userId Int
+
+    status String
+
+    discount   Discount? @relation(fields: [discountId], references: [id])
+    discountId Int?
+
+    order Order?
+
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+    DiscountItem   DiscountItem? @relation(fields: [discountItemId], references: [id])
+    discountItemId Int?
+}
+
+model Discount {
+    id          Int     @id @default(autoincrement())
+    name        String
+    description String?
+    amount      Float // จำนวนเงินหรือเปอร์เซ็นต์ที่จะลดราคา
+
+    Discount DiscountItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    Transaction Transaction[]
+}
+
+model DiscountItem {
+    id Int @id @default(autoincrement())
+
+    User   User? @relation(fields: [userId], references: [id])
+    userId Int?
+
+    discount   Discount? @relation(fields: [discountId], references: [id])
+    discountId Int?
+
+    Transaction Transaction[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model NotifyToken {
+    id         Int      @id @default(autoincrement())
+    user       User     @relation(fields: [userId], references: [id])
+    userId     Int
+    deviceType String
+    token      String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}
